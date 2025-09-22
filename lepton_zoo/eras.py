@@ -17,12 +17,12 @@ class LHCRun(StrEnum):
 
 
 class Year(StrEnum):
-    RunSummer24 = auto()
-    RunSummer23BPix = auto()
-    RunSummer23 = auto()
-    RunSummer22EE = auto()
-    RunSummer22 = auto()
-    Run2018 = auto()
-    Run2017 = auto()
-    Run2016preVFP = auto()
-    Run2016postVFP = auto()
+    RunSummer24 = "RunSummer24"
+    RunSummer23BPix = "RunSummer23BPix"
+    RunSummer23 = "RunSummer23"
+    RunSummer22EE = "RunSummer22EE"
+    RunSummer22 = "RunSummer22"
+    Run2018 = "Run2018"
+    Run2017 = "Run2017"
+    Run2016preVFP = "Run2016preVFP"
+    Run2016postVFP = "Run2016postVFP"

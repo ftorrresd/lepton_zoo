@@ -1,13 +1,25 @@
-from enum import StrEnum, auto
+import getpass
+import os
+from enum import StrEnum
 from typing import Self
 
+from dbs.apis.dbsClient import DbsApi
 from pydantic import BaseModel, model_validator
 
 from .eras import LHCRun, NanoADODVersion, Year
 
+dbs = DbsApi("https://cmsweb.cern.ch/dbs/prod/global/DBSReader")
+
+try:
+    os.environ["USER"]
+
+except KeyError as _:
+    os.environ["USER"] = getpass.getuser()
+
 
 class ProcessGroup(StrEnum):
-    DRELLYAN = "Drell-Yan"
+    DATA = "Data"
+    DRELL_YAN = "Drell-Yan"
     QCD = "QCD"
     TTBAR = "ttbar"
     WJETS = "WJets"
@@ -18,14 +30,14 @@ class ProcessGroup(StrEnum):
 
 
 class DatasetType(StrEnum):
-    DATA = auto()
-    BKG = auto()
-    SIGNAL = auto()
+    DATA = "Data"
+    BACKGROUND = "Background"
+    SIGNAL = "Signal"
 
 
 class Dataset(BaseModel):
     das_names: str | list[str]
-    process_name: str
+    process_name: str | None = None
     process_group: ProcessGroup
     year: Year
     nanoadod_version: NanoADODVersion
@@ -57,8 +69,23 @@ class Dataset(BaseModel):
         return self
 
     @model_validator(mode="after")
+    def set_process_name(self) -> Self:
+        if self.process_name is None:
+            self.process_name = self.das_names[0].split("/")[1]
+
+        if self.process_name is None or self.process_name == "":
+            raise ValueError(f"Bad name for {self}")
+
+        return self
+
+    @model_validator(mode="after")
     def build_lfn_list(self) -> Self:
         if self.lfns is None:
-            self.lfns = ["foo", "bar"]
+            self.lfns = []
+            for das_name in self.das_names:
+                self.lfns += [
+                    file["logical_file_name"].strip()
+                    for file in dbs.listFiles(dataset=das_name)
+                ]
 
         return self

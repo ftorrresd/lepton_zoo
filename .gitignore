@@ -1,3 +1,5 @@
 micromamba
 venv
 __pycache__
+analysis_config.json
+parsed_datasets.json
