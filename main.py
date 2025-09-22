@@ -1,8 +1,10 @@
-from lepton_zoo import foo, Year
-import typer
-from pathlib import Path
-from functools import wraps
 import time
+from functools import wraps
+from pathlib import Path
+
+import typer
+
+from lepton_zoo import Year, foo
 
 
 def execution_time(func):
@@ -43,7 +45,9 @@ def build(
     """
     Build analysis config.
     """
-    print(inputs)
+    from datasets import datasets
+
+    print(datasets)
 
 
 @classification_app.command(name="classification")

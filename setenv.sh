@@ -1,3 +1,3 @@
-export PATH="$PATH:."
+export PATH="$PATH:./bin"
 
 

@@ -1,6 +1,9 @@
-from pydantic import BaseModel
 from enum import StrEnum, auto
-from .eras import Year, LHCRun, NanoADODVersion
+from typing import Self
+
+from pydantic import BaseModel, model_validator
+
+from .eras import LHCRun, NanoADODVersion, Year
 
 
 class ProcessGroup(StrEnum):
@@ -28,13 +31,34 @@ class Dataset(BaseModel):
     nanoadod_version: NanoADODVersion
     lhc_run: LHCRun
     dataset_type: DatasetType
-    x_sec: float
+    xsec: float
     filter_eff: float
     k_factor: float
-    lfn: str | None
+    lfns: list[str] | None = None
+    generator_filter: str | None = None
 
-    def __str__(self) -> str:
+    def short_str(self) -> str:
         return f"[{self.process_name}]_[{self.process_group}]_[{self.year}]_[{self.lhc_run}]_[{self.dataset_type}]"
 
-    def is_complete(self):
-        return self.lfn is not None
+    @model_validator(mode="after")
+    def set_xsec(self) -> Self:
+        if self.dataset_type == DatasetType.DATA:
+            self.xsec = 1.0
+            self.k_factor = 1.0
+            self.filter_eff = 1.0
+
+        return self
+
+    @model_validator(mode="after")
+    def build_das_names(self) -> Self:
+        if isinstance(self.das_names, str):
+            self.das_names = [self.das_names]
+
+        return self
+
+    @model_validator(mode="after")
+    def build_lfn_list(self) -> Self:
+        if self.lfns is None:
+            self.lfns = ["foo", "bar"]
+
+        return self

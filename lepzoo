@@ -1,3 +1,0 @@
-#!/bin/bash
-
-micromamba run -p ./venv python3 main.py "$@"
