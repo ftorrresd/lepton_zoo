@@ -20,10 +20,12 @@ def load_file(file_lfn: str):
         except:
             pass
 
-    raise RuntimeError("File is not accessible for any redirector")
+    raise RuntimeError("File is not accessible by any redirector")
 
 
-def run_classification(file_to_process: str | int, dataset: Dataset) -> None:
+def run_classification(
+    file_to_process: str | int, dataset: Dataset, silence_mode: bool
+) -> None:
     """
     Will classify one file
     """
@@ -38,5 +40,6 @@ def run_classification(file_to_process: str | int, dataset: Dataset) -> None:
             ValueError("Invalid type for file_to_process")
 
     nanoaod_file = load_file(file_to_process)
-    print(nanoaod_file)
+    if not silence_mode:
+        print(nanoaod_file)
     return

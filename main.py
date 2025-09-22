@@ -1,5 +1,7 @@
 import importlib
 import json
+import shlex
+import subprocess as sp
 import time
 from functools import wraps
 from pathlib import Path
@@ -92,6 +94,7 @@ def run_serial(
     max_files: int = -1,
     file_index: int | None = None,
     parsed_datasets_file: Path = Path("parsed_datasets.json"),
+    silence_mode: bool = False,
 ):
     """
     Run selection and classification.
@@ -117,12 +120,75 @@ def run_serial(
                         )
                     ):
                         if max_files <= 0 or (max_files > 0 and i + 1 <= max_files):
-                            run_classification(i, dataset)
+                            run_classification(i, dataset, silence_mode)
                 case int():
-                    print(
-                        f"Processing {dataset.lfns[file_index]} of {dataset.short_str()} ..."
-                    )
-                    run_classification(file_index, dataset)
+                    if not silence_mode:
+                        print(
+                            f"Processing {dataset.lfns[file_index]} of {dataset.short_str()} ..."
+                        )
+                    run_classification(file_index, dataset, silence_mode)
+
+
+@classification_app.command()
+@execution_time
+def run_parallel(
+    process_name: str | None = None,
+    year: Year | None = None,
+    max_files: int = -1,
+    parsed_datasets_file: Path = Path("parsed_datasets.json"),
+):
+    """
+    Run selection and classification.
+    """
+
+    with parsed_datasets_file.open("r", encoding="utf-8") as f:
+        parsed_datasets: list[Dataset] = json.load(f)
+    parsed_datasets: list[Dataset] = [
+        Dataset.model_validate(obj) for obj in parsed_datasets
+    ]
+
+    cmds: list[str] = []
+    for dataset in parsed_datasets:
+        if dataset.process_name == process_name or process_name is None:
+            if dataset.year == year or year is None:
+                assert dataset.lfns is not None
+                for i, _ in enumerate(dataset.lfns):
+                    if max_files <= 0 or (max_files > 0 and i + 1 <= max_files):
+                        cmds.append(
+                            f"lepzoo classification run-serial {dataset.process_name} {dataset.year} --file-index {i} --silence_mode"
+                        )
+
+    Path("cmds.txt").write_text("\n".join(cmds) + "\n", encoding="utf-8")
+
+    def run_stream(cmd, *, cwd=None, env=None):
+        # Force line-buffered text
+        proc = sp.Popen(
+            cmd,
+            cwd=cwd,
+            env=env,
+            stdout=sp.PIPE,
+            stderr=sp.STDOUT,  # merge stderr into stdout (optional)
+            text=True,
+            bufsize=1,  # line buffering
+        )
+        try:
+            # Iterate as lines arrive
+            assert proc.stdout is not None
+            for line in proc.stdout:
+                print(line, end="")
+        finally:
+            # Ensure pipes closed; wait for exit code
+            ret = proc.wait()
+        return ret
+
+    print(f"Will run {len(cmds)} in parallel ...")
+
+    code = run_stream(
+        shlex.split(
+            "parallel -j 4 --bar --retries 3 --halt soon,fail=1 --joblog joblog.tsv < cmds.txt"
+        )
+    )
+    print(f"\nExit code: {code}")
 
 
 @plotter_app.command()
