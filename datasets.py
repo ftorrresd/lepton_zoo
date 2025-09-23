@@ -6,6 +6,20 @@ datasets.append(
     Dataset(
         das_names=[
             "/Muon0/Run2024G-MINIv6NANOv15-v1/NANOAOD",
+        ],
+        process_group=ProcessGroup.DATA,
+        year=Year.RunSummer24,
+        nanoadod_version=NanoADODVersion.V15,
+        lhc_run=LHCRun.Run3,
+        dataset_type=DatasetType.DATA,
+        xsec=1.0,
+        filter_eff=1.0,
+        k_factor=1.0,
+    )
+)
+datasets.append(
+    Dataset(
+        das_names=[
             "/Muon1/Run2024G-MINIv6NANOv15-v2/NANOAOD",
         ],
         process_group=ProcessGroup.DATA,

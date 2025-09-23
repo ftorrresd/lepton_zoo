@@ -1,15 +1,7 @@
-from enum import StrEnum
-
 import uproot
 
-from lepton_zoo.datasets import Dataset
-
-
-class Redirectors(StrEnum):
-    FNAL = "root://cmsxrootd.fnal.gov//"
-    INFN = "root://xrootd-cms.infn.it//"
-    CERN = "root://cms-xrd-global.cern.ch//"
-    RWTH = "root://grid-dcache.physik.rwth-aachen.de//"
+from .datasets import Dataset
+from .redirectors import Redirectors
 
 
 def load_file(file_lfn: str):
