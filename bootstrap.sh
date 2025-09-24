@@ -6,4 +6,5 @@ mv micromamba-linux-64 bin/micromamba
 chmod +x bin/micromamba
 
 # create env
+rm -rf venv
 bin/micromamba create -y -p ./venv -c conda-forge --file environment.yml

@@ -1,22 +1,9 @@
-import uproot
-
 from .datasets import Dataset
-from .redirectors import Redirectors
-
-
-def load_file(file_lfn: str):
-    for redirector in Redirectors:
-        try:
-            nanoaod_file = uproot.open(f"{redirector}{file_lfn}")
-            return nanoaod_file
-        except:
-            pass
-
-    raise RuntimeError("File is not accessible by any redirector")
+from .events import Events
 
 
 def run_classification(
-    file_to_process: str | int, dataset: Dataset, silence_mode: bool
+    file_to_process: str | int, dataset: Dataset, silence_mode: bool, enable_cache: bool
 ) -> None:
     """
     Will classify one file
@@ -31,7 +18,8 @@ def run_classification(
         case _:
             ValueError("Invalid type for file_to_process")
 
-    nanoaod_file = load_file(file_to_process)
+    events = Events.build_events(file_to_process, enable_cache)
     if not silence_mode:
-        print(nanoaod_file)
+        print(events)
+
     return

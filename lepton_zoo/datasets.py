@@ -1,18 +1,19 @@
 import getpass
 import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from enum import StrEnum
 from typing import Self
 
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from numpy import result_type
-from rich.progress import track
-from dbs.apis.dbsClient import DbsApi
 import uproot
+from dbs.apis.dbsClient import DbsApi
+from numpy import result_type
 from pydantic import BaseModel, model_validator
+from rich.progress import track
+
+from lepton_zoo import redirectors
 
 from .eras import LHCRun, NanoADODVersion, Year
 from .redirectors import Redirectors
-from lepton_zoo import redirectors
 
 dbs = DbsApi("https://cmsweb.cern.ch/dbs/prod/global/DBSReader")
 
@@ -102,6 +103,7 @@ class Dataset(BaseModel):
         if self.lfns is None:
             self.lfns = []
             for das_name in self.das_names:
+                print(f"Testing files for {das_name}...")
                 all_files = [
                     file["logical_file_name"].strip()
                     for file in dbs.listFiles(dataset=das_name)
@@ -112,7 +114,7 @@ class Dataset(BaseModel):
                     for fut in track(
                         as_completed(futures),
                         total=len(futures),
-                        description=f"Testing files for {das_name}...",
+                        description=f"Processing...",
                     ):
                         success, f = fut.result()
                         if success:
@@ -120,5 +122,7 @@ class Dataset(BaseModel):
 
                 if len(results) / len(all_files) < 0.6:
                     raise RuntimeError(f"Not enough files passed test for {das_name}")
+
+                self.lfns += results
 
         return self

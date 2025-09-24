@@ -226,3 +226,4 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+nanoaod_files_cache

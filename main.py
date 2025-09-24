@@ -1,19 +1,18 @@
 import importlib
 import json
+import os
 import subprocess as sp
+import sys
 import time
 from functools import wraps
 from pathlib import Path
+from typing import Literal, Sequence, Union
 
 import typer
 from rich.progress import track
 
 from lepton_zoo import Year
 from lepton_zoo.datasets import Dataset
-import os
-import sys
-import subprocess as sp
-from typing import Sequence, Union, Literal
 
 StreamMode = Literal["auto", "lines", "chars"]
 
@@ -96,7 +95,8 @@ def run_stream_shell(
                     print(line, end="")
         else:
             # Dual-stream path
-            import threading, queue
+            import queue
+            import threading
 
             q: "queue.Queue[tuple[str, bytes|str|None]]" = queue.Queue()
 
@@ -246,6 +246,7 @@ def run_serial(
     file_index: int | None = None,
     parsed_datasets_file: Path = Path("parsed_datasets.json"),
     silence_mode: bool = False,
+    enable_cache: bool = False,
 ):
     """
     Run selection and classification.
@@ -257,6 +258,9 @@ def run_serial(
     parsed_datasets: list[Dataset] = [
         Dataset.model_validate(obj) for obj in parsed_datasets
     ]
+
+    if enable_cache:
+        os.system("mkdir -p nanoaod_files_cache")
 
     for dataset in parsed_datasets:
         if dataset.process_name == process_name and dataset.year == year:
@@ -271,13 +275,13 @@ def run_serial(
                         )
                     ):
                         if max_files <= 0 or (max_files > 0 and i + 1 <= max_files):
-                            run_classification(i, dataset, silence_mode)
+                            run_classification(i, dataset, silence_mode, enable_cache)
                 case int():
                     if not silence_mode:
                         print(
                             f"Processing {dataset.lfns[file_index]} of {dataset.short_str()} ..."
                         )
-                    run_classification(file_index, dataset, silence_mode)
+                    run_classification(file_index, dataset, silence_mode, enable_cache)
 
 
 @classification_app.command()
